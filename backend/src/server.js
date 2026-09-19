@@ -25,32 +25,36 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, Postman)
-      if (!origin) return callback(null, true);
-      if (
-        allowedOrigins.includes(origin) ||
-        origin.endsWith('.netlify.app') ||
-        origin.endsWith('.onrender.com')
-      ) {
-        return callback(null, true);
-      }
-      return callback(null, true); // Permissive for API consumers
-    },
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.netlify.app') ||
+      origin.endsWith('.onrender.com') ||
+      origin.includes('localhost')
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true); // Permissive for API consumers
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Core Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 /**
- * Health Check Endpoint: GET /api/health
+ * Health Check Endpoint: GET /api/health and /health
  */
-app.get('/api/health', (req, res) => {
+const healthHandler = (req, res) => {
   const dbState = mongoose.connection.readyState;
   const states = {
     0: 'disconnected',
@@ -74,7 +78,10 @@ app.get('/api/health', (req, res) => {
     uptime: `${Math.floor(process.uptime())}s`,
     timestamp: new Date().toISOString(),
   });
-});
+};
+
+app.get('/api/health', healthHandler);
+app.get('/health', healthHandler);
 
 // Root API Welcome
 app.get('/', (req, res) => {
@@ -87,12 +94,19 @@ app.get('/', (req, res) => {
   });
 });
 
-// API Routes
+// API Routes (standard /api prefix)
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/tasks/:taskId/comments', commentRoutes);
 app.use('/api/comments', commentRoutes);
+
+// Fallback Route Aliases (in case requests are sent without /api prefix)
+app.use('/auth', authRoutes);
+app.use('/projects', projectRoutes);
+app.use('/tasks', taskRoutes);
+app.use('/tasks/:taskId/comments', commentRoutes);
+app.use('/comments', commentRoutes);
 
 // 404 Handler for unmatched API routes
 app.use('/api/*', (req, res) => {
