@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
 
 const userSchema = new mongoose.Schema(
   {
@@ -30,14 +30,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: () => {
         const colors = [
-          '#3b82f6', // blue
-          '#8b5cf6', // purple
-          '#ec4899', // pink
-          '#10b981', // emerald
-          '#f59e0b', // amber
-          '#06b6d4', // cyan
-          '#6366f1', // indigo
-          '#14b8a6', // teal
+          '#3b82f6',
+          '#8b5cf6',
+          '#ec4899',
+          '#10b981',
+          '#f59e0b',
+          '#06b6d4',
+          '#6366f1',
+          '#14b8a6',
         ];
         return colors[Math.floor(Math.random() * colors.length)];
       },
@@ -53,7 +53,6 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Encrypt password using bcrypt before saving
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
     return next();
@@ -63,9 +62,8 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// Match user-entered password to hashed password in database
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model('User', userSchema);
+export default mongoose.model('User', userSchema);

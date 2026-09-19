@@ -1,10 +1,10 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
 /**
  * Protect routes: verify JWT Bearer token and attach req.user
  */
-const protect = async (req, res, next) => {
+export const protect = async (req, res, next) => {
   let token;
 
   if (
@@ -27,7 +27,6 @@ const protect = async (req, res, next) => {
 
       return next();
     } catch (error) {
-      console.error('[Auth Middleware] Invalid token:', error.message);
       return res.status(401).json({
         success: false,
         message: 'Not authorized, token is invalid or has expired.',
@@ -42,5 +41,3 @@ const protect = async (req, res, next) => {
     });
   }
 };
-
-module.exports = { protect };

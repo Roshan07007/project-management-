@@ -1,16 +1,13 @@
-const Project = require('../models/Project');
-const Task = require('../models/Task');
-const Comment = require('../models/Comment');
-const User = require('../models/User');
+import Project from '../models/Project.js';
+import Task from '../models/Task.js';
+import Comment from '../models/Comment.js';
+import User from '../models/User.js';
 
 const getEntityId = (entity) => {
   if (!entity) return null;
   return (entity._id || entity).toString();
 };
 
-/**
- * Helper to check user permission on a project
- */
 const checkProjectAccess = (project, userId) => {
   const userIdStr = userId ? userId.toString() : '';
   const ownerId = getEntityId(project.owner);
@@ -20,12 +17,7 @@ const checkProjectAccess = (project, userId) => {
   return { hasAccess: !!role, role, isOwner };
 };
 
-/**
- * @desc    Get all projects for current user
- * @route   GET /api/projects
- * @access  Private
- */
-exports.getProjects = async (req, res, next) => {
+export const getProjects = async (req, res, next) => {
   try {
     const projects = await Project.find({
       $or: [{ owner: req.user._id }, { 'members.user': req.user._id }],
@@ -75,12 +67,7 @@ exports.getProjects = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Get single project by ID with tasks & member details
- * @route   GET /api/projects/:id
- * @access  Private
- */
-exports.getProjectById = async (req, res, next) => {
+export const getProjectById = async (req, res, next) => {
   try {
     const project = await Project.findById(req.params.id)
       .populate('owner', 'name email avatarColor bio')
@@ -139,12 +126,7 @@ exports.getProjectById = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Create a new project
- * @route   POST /api/projects
- * @access  Private
- */
-exports.createProject = async (req, res, next) => {
+export const createProject = async (req, res, next) => {
   try {
     const { title, description, status, startDate, dueDate } = req.body;
 
@@ -198,12 +180,7 @@ exports.createProject = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Update an existing project
- * @route   PUT /api/projects/:id
- * @access  Private
- */
-exports.updateProject = async (req, res, next) => {
+export const updateProject = async (req, res, next) => {
   try {
     const project = await Project.findById(req.params.id);
 
@@ -246,12 +223,7 @@ exports.updateProject = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Delete project (and cascade delete tasks & comments)
- * @route   DELETE /api/projects/:id
- * @access  Private
- */
-exports.deleteProject = async (req, res, next) => {
+export const deleteProject = async (req, res, next) => {
   try {
     const project = await Project.findById(req.params.id);
 
@@ -262,7 +234,6 @@ exports.deleteProject = async (req, res, next) => {
       });
     }
 
-    // Only owner can delete the project
     if (getEntityId(project.owner) !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
@@ -270,7 +241,6 @@ exports.deleteProject = async (req, res, next) => {
       });
     }
 
-    // Find all tasks of this project to delete comments
     const tasks = await Task.find({ project: project._id }).select('_id');
     const taskIds = tasks.map((t) => t._id);
 
@@ -287,12 +257,7 @@ exports.deleteProject = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Add member to project (by email or user ID)
- * @route   POST /api/projects/:id/members
- * @access  Private
- */
-exports.addProjectMember = async (req, res, next) => {
+export const addProjectMember = async (req, res, next) => {
   try {
     const project = await Project.findById(req.params.id);
 
@@ -327,7 +292,6 @@ exports.addProjectMember = async (req, res, next) => {
       });
     }
 
-    // Check if already a member
     const alreadyMember = project.members.some(
       (m) => getEntityId(m.user) === targetUser._id.toString()
     );
@@ -361,12 +325,7 @@ exports.addProjectMember = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Remove member from project
- * @route   DELETE /api/projects/:id/members/:userId
- * @access  Private
- */
-exports.removeProjectMember = async (req, res, next) => {
+export const removeProjectMember = async (req, res, next) => {
   try {
     const project = await Project.findById(req.params.id);
 
@@ -379,7 +338,6 @@ exports.removeProjectMember = async (req, res, next) => {
 
     const targetUserId = req.params.userId;
 
-    // Prevent removing the project owner
     if (getEntityId(project.owner) === targetUserId.toString()) {
       return res.status(400).json({
         success: false,
@@ -403,7 +361,6 @@ exports.removeProjectMember = async (req, res, next) => {
 
     await project.save();
 
-    // Unassign tasks assigned to this removed user in this project
     await Task.updateMany(
       { project: project._id, assignedTo: targetUserId },
       { $set: { assignedTo: null } }

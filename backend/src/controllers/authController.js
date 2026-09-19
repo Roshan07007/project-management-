@@ -1,22 +1,12 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
-/**
- * Generate JWT token
- */
 const generateToken = (id) => {
   const jwtSecret = process.env.JWT_SECRET || 'taskflow_default_secret_jwt';
-  return jwt.sign({ id }, jwtSecret, {
-    expiresIn: '30d',
-  });
+  return jwt.sign({ id }, jwtSecret, { expiresIn: '30d' });
 };
 
-/**
- * @desc    Register a new user
- * @route   POST /api/auth/register
- * @access  Public
- */
-exports.register = async (req, res, next) => {
+export const register = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
@@ -34,7 +24,6 @@ exports.register = async (req, res, next) => {
       });
     }
 
-    // Check if email already registered
     const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
     if (existingUser) {
       return res.status(400).json({
@@ -69,12 +58,7 @@ exports.register = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Authenticate user & get token
- * @route   POST /api/auth/login
- * @access  Public
- */
-exports.login = async (req, res, next) => {
+export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -121,12 +105,7 @@ exports.login = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Get current authenticated user profile
- * @route   GET /api/auth/me
- * @access  Private
- */
-exports.getMe = async (req, res, next) => {
+export const getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
     return res.status(200).json({
@@ -138,12 +117,7 @@ exports.getMe = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Update user profile (name, bio, avatarColor)
- * @route   PUT /api/auth/profile
- * @access  Private
- */
-exports.updateProfile = async (req, res, next) => {
+export const updateProfile = async (req, res, next) => {
   try {
     const { name, bio, avatarColor } = req.body;
 
@@ -178,12 +152,7 @@ exports.updateProfile = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Change account password
- * @route   PUT /api/auth/change-password
- * @access  Private
- */
-exports.changePassword = async (req, res, next) => {
+export const changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
@@ -223,12 +192,7 @@ exports.changePassword = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    List / search all users
- * @route   GET /api/auth/users
- * @access  Private
- */
-exports.getUsers = async (req, res, next) => {
+export const getUsers = async (req, res, next) => {
   try {
     const { search } = req.query;
     let query = {};

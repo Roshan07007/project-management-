@@ -1,15 +1,12 @@
-const Comment = require('../models/Comment');
-const Task = require('../models/Task');
-const Project = require('../models/Project');
+import Comment from '../models/Comment.js';
+import Task from '../models/Task.js';
+import Project from '../models/Project.js';
 
 const getEntityId = (entity) => {
   if (!entity) return null;
   return (entity._id || entity).toString();
 };
 
-/**
- * Helper to verify user access to the task's project
- */
 const verifyTaskAccess = async (taskId, userId) => {
   const task = await Task.findById(taskId);
   if (!task) return { hasAccess: false, task: null, project: null };
@@ -26,12 +23,7 @@ const verifyTaskAccess = async (taskId, userId) => {
   return { hasAccess: !!role, task, project, role, isOwner };
 };
 
-/**
- * @desc    Get all comments for a task
- * @route   GET /api/tasks/:taskId/comments
- * @access  Private
- */
-exports.getCommentsByTask = async (req, res, next) => {
+export const getCommentsByTask = async (req, res, next) => {
   try {
     const { taskId } = req.params;
     const { hasAccess } = await verifyTaskAccess(taskId, req.user._id);
@@ -57,12 +49,7 @@ exports.getCommentsByTask = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Add comment to a task
- * @route   POST /api/tasks/:taskId/comments
- * @access  Private
- */
-exports.addComment = async (req, res, next) => {
+export const addComment = async (req, res, next) => {
   try {
     const { taskId } = req.params;
     const { content } = req.body;
@@ -103,12 +90,7 @@ exports.addComment = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Delete a comment
- * @route   DELETE /api/comments/:id
- * @access  Private
- */
-exports.deleteComment = async (req, res, next) => {
+export const deleteComment = async (req, res, next) => {
   try {
     const comment = await Comment.findById(req.params.id);
 

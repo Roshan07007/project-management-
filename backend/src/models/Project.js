@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const projectSchema = new mongoose.Schema(
   {
@@ -61,11 +61,10 @@ const projectSchema = new mongoose.Schema(
   }
 );
 
-// Virtual for tasks belonging to this project
 projectSchema.virtual('tasks', {
   ref: 'Task',
   localField: '_id',
   foreignField: 'project',
 });
 
-module.exports = mongoose.model('Project', projectSchema);
+export default mongoose.model('Project', projectSchema);

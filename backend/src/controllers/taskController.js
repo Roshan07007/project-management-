@@ -1,16 +1,12 @@
-const Task = require('../models/Task');
-const Project = require('../models/Project');
-const Comment = require('../models/Comment');
-const User = require('../models/User');
+import Task from '../models/Task.js';
+import Project from '../models/Project.js';
+import Comment from '../models/Comment.js';
 
 const getEntityId = (entity) => {
   if (!entity) return null;
   return (entity._id || entity).toString();
 };
 
-/**
- * Helper to check project membership
- */
 const verifyProjectAccess = async (projectId, userId) => {
   const project = await Project.findById(projectId);
   if (!project) return { hasAccess: false, project: null };
@@ -23,45 +19,33 @@ const verifyProjectAccess = async (projectId, userId) => {
   return { hasAccess: isOwner || isMember, project };
 };
 
-/**
- * @desc    Get all tasks accessible by current user (with search & filters)
- * @route   GET /api/tasks
- * @access  Private
- */
-exports.getTasks = async (req, res, next) => {
+export const getTasks = async (req, res, next) => {
   try {
     const { project: projectId, status, priority, assignedTo, search } = req.query;
 
-    // Find all projects where user is owner or member
     const userProjects = await Project.find({
       $or: [{ owner: req.user._id }, { 'members.user': req.user._id }],
     }).select('_id');
 
     const userProjectIds = userProjects.map((p) => p._id);
-
     let query = { project: { $in: userProjectIds } };
 
-    // Filter by specific project
     if (projectId) {
       query.project = projectId;
     }
 
-    // Filter by status ('To Do', 'In Progress', 'Completed')
     if (status && status !== 'All') {
       query.status = status;
     }
 
-    // Filter by priority ('Low', 'Medium', 'High')
     if (priority && priority !== 'All') {
       query.priority = priority;
     }
 
-    // Filter by assigned user
     if (assignedTo && assignedTo !== 'All') {
       query.assignedTo = assignedTo === 'unassigned' ? null : assignedTo;
     }
 
-    // Search by title or description
     if (search && search.trim() !== '') {
       query.$or = [
         { title: { $regex: search.trim(), $options: 'i' } },
@@ -85,12 +69,7 @@ exports.getTasks = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Get single task by ID with populated comments
- * @route   GET /api/tasks/:id
- * @access  Private
- */
-exports.getTaskById = async (req, res, next) => {
+export const getTaskById = async (req, res, next) => {
   try {
     const task = await Task.findById(req.params.id)
       .populate('project', 'title owner status members')
@@ -128,12 +107,7 @@ exports.getTaskById = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Create a new task
- * @route   POST /api/tasks
- * @access  Private
- */
-exports.createTask = async (req, res, next) => {
+export const createTask = async (req, res, next) => {
   try {
     const { title, description, project: projectId, assignedTo, status, priority, dueDate } = req.body;
 
@@ -159,7 +133,6 @@ exports.createTask = async (req, res, next) => {
       });
     }
 
-    // Verify assignedTo is a valid project member or owner
     if (assignedTo) {
       const assignedToStr = assignedTo.toString();
       const isOwner = getEntityId(project.owner) === assignedToStr;
@@ -199,12 +172,7 @@ exports.createTask = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Update task details (status, priority, due date, assignee, etc.)
- * @route   PUT /api/tasks/:id
- * @access  Private
- */
-exports.updateTask = async (req, res, next) => {
+export const updateTask = async (req, res, next) => {
   try {
     const task = await Task.findById(req.params.id);
 
@@ -265,12 +233,7 @@ exports.updateTask = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Delete task and its comments
- * @route   DELETE /api/tasks/:id
- * @access  Private
- */
-exports.deleteTask = async (req, res, next) => {
+export const deleteTask = async (req, res, next) => {
   try {
     const task = await Task.findById(req.params.id);
 

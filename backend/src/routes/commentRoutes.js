@@ -1,18 +1,16 @@
-const express = require('express');
-const router = express.Router({ mergeParams: true });
-const {
+import express from 'express';
+import {
   getCommentsByTask,
   addComment,
   deleteComment,
-} = require('../controllers/commentController');
-const { protect } = require('../middleware/auth');
+} from '../controllers/commentController.js';
+import { protect } from '../middleware/auth.js';
+
+const router = express.Router({ mergeParams: true });
 
 router.use(protect);
 
-// /api/tasks/:taskId/comments
 router.route('/').get(getCommentsByTask).post(addComment);
-
-// /api/comments/:id
 router.route('/:id').delete(deleteComment);
 
-module.exports = router;
+export default router;

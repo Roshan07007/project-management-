@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const taskSchema = new mongoose.Schema(
   {
@@ -57,11 +57,10 @@ const taskSchema = new mongoose.Schema(
   }
 );
 
-// Virtual for comments
 taskSchema.virtual('comments', {
   ref: 'Comment',
   localField: '_id',
   foreignField: 'task',
 });
 
-module.exports = mongoose.model('Task', taskSchema);
+export default mongoose.model('Task', taskSchema);
